@@ -1,6 +1,7 @@
-### SISTEMA CAMPUS VIRTUAL 
+### SISTEMA CAMPUS VIRTUAL
 
-## STACK 
+## STACK
+
 - **Backend:** NestJS + TypeScript + Prisma ORM (v7) + PostgreSQL
 - **Frontend:** React + Vite + TypeScript + Redux Toolkit
 - **Mobile:** a definir más adelante (probablemente React Native, reutilizando tipos con el frontend web)
@@ -135,14 +136,14 @@ Ver `prisma/schema.prisma` para el detalle completo de campos y relaciones.
 - Solo ADMIN puede cambiar el rol de un usuario o desactivarlo (`activo: false`).
 - Un usuario desactivado no puede iniciar sesión, pero su historial
   (entregas, mensajes, foros) permanece visible para quienes ya interactuaron con él.
-- *(a confirmar)* Un PROFESOR no puede eliminar su propia cuenta si tiene
+- Un PROFESOR no puede eliminar su propia cuenta si tiene
   cursos activos a su cargo sin otro co-profesor asignado.
 
 ### Curso
 
 - Solo ADMIN o un PROFESOR asignado al curso pueden editarlo o eliminarlo.
 - Un curso no puede eliminarse si tiene inscripciones `ACTIVA` sin antes
-  finalizarlas o reasignarlas *(a confirmar: ¿se bloquea, o se permite con aviso?)*.
+  finalizarlas o reasignarlas _(a confirmar: ¿se bloquea, o se permite con aviso?)_.
 - El `cupoMaximo` no puede reducirse por debajo de la cantidad de inscripciones
   `ACTIVA` actuales.
 - Eliminar un curso (soft-delete) no elimina su Contenido/Entregas/Foro: quedan
@@ -159,8 +160,7 @@ Ver `prisma/schema.prisma` para el detalle completo de campos y relaciones.
 ### Contenido
 
 - Solo PROFESOR del curso o ADMIN pueden crear/editar/eliminar contenido.
-- Un Contenido de tipo TAREA no puede eliminarse si ya tiene Entregas asociadas
-  *(a confirmar: ¿agregamos un estado "archivado" distinto del soft-delete?)*.
+- Un Contenido de tipo TAREA no puede eliminarse si ya tiene Entregas asociadas (El unico caso en el que no exista mas es si se elimina el curso)
 - La `fechaEntrega` de una tarea no puede modificarse a una fecha pasada si ya
   hay entregas realizadas antes del cambio.
 - Un Contenido de tipo `DOCUMENTO_NOTAS` no puede crearse ni editarse
@@ -172,7 +172,7 @@ Ver `prisma/schema.prisma` para el detalle completo de campos y relaciones.
   la `fechaEntrega` del Contenido asociado; cada subida crea una nueva fila
   (`version` incremental) y marca la anterior `esVigente: false`.
 - Una vez superada la `fechaEntrega`, el estudiante ya no puede crear nuevas
-  versiones *(a confirmar: ¿excepción puntual tipo "entrega tardía permitida"?)*.
+  versiones _(a confirmar: ¿excepción puntual tipo "entrega tardía permitida"?)_.
 - El profesor puede corregir (nota + feedback) una entrega las veces que
   quiera, incluso después de haberla calificado por primera vez.
 - Solo se califica la versión `esVigente: true`; las versiones anteriores
@@ -187,7 +187,7 @@ Ver `prisma/schema.prisma` para el detalle completo de campos y relaciones.
 ### Mensajería y Difusión
 
 - Un mensaje 1 a 1 solo puede eliminarlo (de su propia vista) quien lo envió o
-  lo recibió *(a confirmar: eliminación "para mí", o para ambos?)*.
+  lo recibió _(a confirmar: eliminación "para mí", o para ambos?)_.
 - Solo PROFESOR o ADMIN de un curso pueden enviar una Difusión a ese curso.
 - Una Difusión ya enviada no puede editarse ni eliminarse (es un comunicado oficial).
 
