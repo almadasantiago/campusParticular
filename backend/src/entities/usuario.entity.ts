@@ -1,21 +1,13 @@
-import { Usuario as UsuarioPrisma } from 'generated\prisma\models\Usuario.ts';
-import { Rol } from '../../generated/prisma/enums';
+import type { Rol } from '../../generated/prisma/enums.js';
 
-
-enum Rol {
-  ADMIN
-  PROFESOR
-  ESTUDIANTE
+export class Usuario {
+  id: string;
+  email: string;
+  passwordHash: string;
+  nombre: string;
+  apellido: string;
+  rol: Rol;
+  activo: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
-
-model Usuario {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  nombre       String
-  apellido     String
-  rol          Rol
-  activo       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-} 
