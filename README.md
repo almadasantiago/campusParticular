@@ -2,50 +2,16 @@
 
 ## STACK
 
-- **Backend:** NestJS + TypeScript + Prisma ORM (v7) + PostgreSQL
+- **Backend:** ASP.NET Core sobre .NET 10
 - **Frontend:** React + Vite + TypeScript + Redux Toolkit
 - **Mobile:** a definir más adelante (probablemente React Native, reutilizando tipos con el frontend web)
 
+## Backend
+
+
 ## Arquitectura
 
-- Monolito modular en el backend, organizado por **capas técnicas** (no por dominio):
-  todos los controllers juntos, todos los services juntos, etc.
-- Pensado para eventualmente migrar módulos puntuales a microservicios si
-  el escalado lo justifica (ej: notificaciones, generación de documentos).
-- Docker y CI/CD quedan pospuestos para después del MVP funcional.
-
-### Estructura de carpetas (backend)
-
-```
-src/
-├── main.ts
-├── app.module.ts
-├── config/
-├── common/
-│   ├── decorators/
-│   ├── guards/
-│   ├── filters/
-│   ├── interceptors/
-│   └── enums/
-├── prisma/
-│   ├── prisma.module.ts
-│   └── prisma.service.ts
-├── entities/
-├── dto/
-│   ├── auth/
-│   ├── usuarios/
-│   ├── cursos/
-│   ├── inscripciones/
-│   ├── contenido/
-│   ├── foro/
-│   ├── mensajeria/
-│   ├── anuncios/
-│   └── calendario/
-├── controllers/
-├── services/
-├── strategies/
-└── modules/
-```
+Docker y CI/CD quedan pospuestos hasta después del MVP funcional.
 
 ### Estructura de carpetas (frontend)
 
@@ -66,22 +32,6 @@ src/
 
 - **UUID como PK** en vez de autoincrement, pensando en una futura separación
   en microservicios (evita colisión de IDs entre servicios).
-- **Prisma 7, no 8**: al momento de empezar el proyecto, Prisma 8 era muy
-  reciente (release candidate) y rompía compatibilidad con el ecosistema de
-  Nest. Se fijó la versión en `package.json` (`"prisma": "^7.10.1"`,
-  `"@prisma/client": "^7.10.1"`).
-- **Archivo de configuración `prisma7.config.ts`** (no `prisma.config.ts`):
-  nombre que usa el CLI de Prisma 7.10+ para poder convivir sin conflicto con
-  proyectos que también tengan Prisma 8 instalado. El `url` de conexión vive
-  ahí (`datasource.url`), no en el `schema.prisma`.
-- **Generator `prisma-client`** (nuevo en v7): el cliente ya no se genera en
-  `node_modules/@prisma/client`, sino en `generated/prisma/` (configurado en
-  el `output` del `schema.prisma`). Los imports usan rutas relativas a esa
-  carpeta (ej: `../../generated/prisma/client`), no `@prisma/client`.
-- **Entities como clase separada del tipo de Prisma**: se usan para controlar
-  qué campos se exponen en las respuestas HTTP (ej: `passwordHash` se excluye
-  con `@Exclude()` + `ClassSerializerInterceptor`), y para documentación con
-  Swagger (`@ApiProperty()`).
 - **Borrado lógico (soft-delete)** en Usuario, Curso, Contenido y Entrega
   (campo `eliminadoEn: DateTime?`, null = activo). Borrado físico en entidades
   sin valor histórico (Mensaje, ForoRespuesta, Notificacion, DifusionLectura).
@@ -115,8 +65,6 @@ Entidades principales:
 - **CalificacionEvento**: nota + observaciones por estudiante, asociada a un
   Evento evaluable (independiente de Entrega, para evaluaciones sin entrega
   digital, ej. examen presencial).
-
-Ver `prisma/schema.prisma` para el detalle completo de campos y relaciones.
 
 ## Reglas de negocio
 
@@ -233,13 +181,11 @@ Ver `prisma/schema.prisma` para el detalle completo de campos y relaciones.
 
 ## Pendiente / próximos pasos
 
-- [ ] Consolidar `schema.prisma` definitivo con todos los cambios acumulados
-      (Curso, CursoProfesor, Inscripcion con PENDIENTE, Entrega versionada,
-      Difusion/DifusionLectura, Notificacion con canal, Evento recurrente +
-      evaluable, CalificacionEvento, tipo DOCUMENTO_NOTAS)
+- [ ] Definir la estructura de carpetas del backend, el ORM y la base de datos
+- [ ] Implementar el modelo de datos descrito arriba
 - [ ] Resolver decisiones marcadas como "a confirmar" en Reglas de negocio
-- [ ] Completar entities y DTOs del resto de los módulos
-- [ ] Módulo de auth (JWT + guards por rol)
+- [ ] Implementar las entidades y los DTOs
+- [ ] Implementar autenticación y autorización por rol
 - [ ] Definir estrategia de almacenamiento de archivos (entregas, PDFs generados)
 - [ ] Docker (pospuesto para después del MVP)
 - [ ] CI/CD (pospuesto)
