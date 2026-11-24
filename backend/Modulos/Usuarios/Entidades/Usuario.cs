@@ -1,12 +1,10 @@
-using System;
-
 namespace CampusParticular.Modulos.Usuarios.Entidades;
 
 public class Usuario
 {
   public Guid Id { get; }
   public string CorreoElectronico { get; }
-  public string HashPassword { get; set; }
+  public string HashPassword { get; private set; }
   public string Nombre { get; set; }
   public string Apellido { get; set; }
   public RolUsuario Rol { get; set; }
@@ -30,6 +28,45 @@ public class Usuario
 
   public Boolean soyAdministrador()
    => this.Rol.Equals(RolUsuario.Admin); 
+
+  public void ActualizarPassword(string nuevoHashPassword)
+  {
+    if (!Activo)
+    {
+      throw new InvalidOperationException("No se puede modificar un usuario desactivado.");
+    }
+
+    ArgumentException.ThrowIfNullOrWhiteSpace(nuevoHashPassword);
+    HashPassword = nuevoHashPassword;
+    FechaActualizado = DateTimeOffset.UtcNow;
+  }
+
+public void ActualizarPerfil(string nombre, string apellido)
+{
+  if (!Activo)
+  {
+    throw new InvalidOperationException(
+      "No se puede modificar un usuario desactivado.");
+  }
+  if (string.IsNullOrWhiteSpace(nombre))
+  {
+        throw new ArgumentException(
+            "El nombre es obligatorio.",
+            nameof(nombre));
+  }
+
+    if (string.IsNullOrWhiteSpace(apellido))
+    {
+        throw new ArgumentException(
+            "El apellido es obligatorio.",
+            nameof(apellido));
+    }
+
+    Nombre = nombre.Trim();
+    Apellido = apellido.Trim();
+    FechaActualizado = DateTimeOffset.UtcNow;
+}
+
 
 }
 

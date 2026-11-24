@@ -1,1 +1,4 @@
 .opencode
+.atl
+.backend/agents
+.backend/node_modules

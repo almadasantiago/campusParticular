@@ -1,6 +1,7 @@
 using CampusParticular.Modulos.Usuarios;
 using CampusParticular.Modulos.Usuarios.Entidades;
 using CampusParticular.Modulos.Usuarios.Persistencia;
+using CampusParticular.Modulos.Usuarios.Seguridad;
 using Microsoft.VisualBasic;
 
 namespace CampusParticular.Modulos.Usuarios;
@@ -8,23 +9,102 @@ namespace CampusParticular.Modulos.Usuarios;
 public sealed class UsuariosService
 {
 private readonly IUsuarioRepositorio _repositorio;
-public UsuariosService(IUsuarioRepositorio repositorio)
+private readonly IPasswordHasher _passwordHasher;
+public UsuariosService(IUsuarioRepositorio repositorio, IPasswordHasher passwordHasher)
 {
   _repositorio = repositorio; 
+  _passwordHasher = passwordHasher;
 
 }
-
 public Task<Usuario?> BuscarPorIdAsync(Guid id, CancellationToken ct)
   {
-    return _repositorio.buscarUsuarioPorIdAsync(id,ct);
+    return _repositorio.BuscarUsuarioPorIdAsync(id,ct);
   }
-  
 
-public void agregarUsuario(Usuario usuario)
+public Task<Usuario?> BuscarPorCorreoAsync (string correoElectronico, CancellationToken ct)
   {
-      _repositorio.AgregarUsuario(usuario);   
-
+    return _repositorio.BuscarUsuarioPorCorreoAsync(correoElectronico,ct); 
   }
+
+public Task<Usuario?> BuscarPorNombreOApellidoAsync (string Nombre,string Apellido, CancellationToken ct)
+  {
+    return _repositorio.BuscarUsuarioPorNombreOApellidoAsync(Nombre,Apellido,ct); 
+  }
+public async Task<Usuario> CrearUsuarioAsync(string correoElectronico,string password,string nombre, string apellido, RolUsuario rol, CancellationToken ct)
+  {
+    ValidarPassword(password);
+    string correo=correoElectronico.Trim().ToLowerInvariant(); 
+     Usuario? usuarioExistente = await BuscarPorCorreoAsync(correo, ct);
+     
+    if (usuarioExistente is not null)
+      {
+        throw new InvalidOperationException (" Ya se encuentra registrado un usuario con ese correo "); 
+      }
+    
+    string hashPassword = _passwordHasher.Hashear(password);
+    Usuario userNuevo = new Usuario(correo,hashPassword,nombre.Trim(),apellido.Trim(),rol); 
+    _repositorio.AgregarUsuario(userNuevo); 
+    await _repositorio.GuardarCambiosAsync(ct);
+    return userNuevo; 
+  }
+
+  public Task<IReadOnlyList<Usuario>>ListarAsync(bool incluirDesactivados,CancellationToken ct)
+  {
+    return _repositorio.ListarUsuariosAsync(incluirDesactivados,ct);  
+  }
+
+  public async Task CambiarPasswordAsync(Guid Id, string PasswordActual, string PasswordNueva, CancellationToken ct)
+  {
+    Usuario? usuario = await _repositorio.BuscarUsuarioPorIdAsync(Id,ct); 
+    if (usuario is null)
+    {
+      throw new InvalidOperationException ("El Usuario No existe."); 
+    }
+
+    if (!_passwordHasher.Verificar(PasswordActual, usuario.HashPassword))
+    {
+      throw new InvalidOperationException("La contraseña actual es incorrecta.");
+    }
+
+    ValidarPassword(PasswordNueva);
+    string nuevoHashPassword = _passwordHasher.Hashear(PasswordNueva);
+    usuario.ActualizarPassword(nuevoHashPassword);
+    await _repositorio.GuardarCambiosAsync(ct);
+  }
+
+private static void ValidarPassword(string password)
+{
+  if (string.IsNullOrWhiteSpace(password))
+  {
+    throw new ArgumentException("La contraseña es obligatoria.", nameof(password));
+  }
+
+  if (password.Length < 6)
+  {
+    throw new ArgumentException(
+      "La contraseña debe tener al menos 6 caracteres.",
+      nameof(password));
+  }
+}
+
+public async Task<Usuario> ActualizarPerfilAsync(Guid id, string nombre, string apellido, CancellationToken ct)
+{
+    Usuario? usuario = await _repositorio.BuscarUsuarioPorIdAsync(id, ct);
+
+    if (usuario is null)
+    {
+      throw new InvalidOperationException("El usuario no existe.");
+    }
+
+    usuario.ActualizarPerfil(nombre, apellido);
+    await _repositorio.GuardarCambiosAsync(ct);
+
+    return usuario;
+}
+
+
+
+
 
 
 

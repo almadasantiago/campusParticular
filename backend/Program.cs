@@ -1,6 +1,7 @@
 using CampusParticular.Infraestructura.Persistencia;
 using CampusParticular.Modulos.Usuarios;
 using CampusParticular.Modulos.Usuarios.Persistencia; 
+using CampusParticular.Modulos.Usuarios.Seguridad;
 using Microsoft.EntityFrameworkCore; 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,7 @@ var rutaBase = Path.Combine(builder.Environment.ContentRootPath, "campus.db");
         opciones => opciones.UseSqlite($"Data Source={rutaBase}")); 
 
 builder.Services.AddScoped<IUsuarioRepositorio,UsuarioRepositorio>(); 
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<UsuariosService>(); 
 
 var app = builder.Build();
