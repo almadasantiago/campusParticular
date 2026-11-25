@@ -4,9 +4,8 @@
 
 - **Backend:** ASP.NET Core sobre .NET 10
 - **Frontend:** React + Vite + TypeScript + Redux Toolkit
+- **Base de Datos** En primera instancia SQLite, luego se pasará a Azuré SQLSERVER
 - **Mobile:** a definir más adelante (probablemente React Native, reutilizando tipos con el frontend web)
-
-## Backend
 
 
 ## Arquitectura
@@ -178,6 +177,57 @@ Entidades principales:
   historial de versiones generadas.
 - Plantilla del PDF: fija/hardcodeada para el MVP (sin selección ni carga de
   plantillas personalizadas por ahora).
+
+## IMPLEMENTACIÓN 
+
+## BACKEND 
+## Flujo Usuarios
+
+### Manejo global de excepciones
+
+El backend centraliza la conversión de excepciones a respuestas HTTP mediante
+`GlobalExceptionHandler`, ubicado en `backend/Infraestructura/Http`. De esta
+forma, los controllers no necesitan repetir bloques `try/catch` para los
+errores esperados de la aplicación.
+
+Los services y las entidades detectan los problemas y lanzan una
+`AplicacionException`, indicando su categoría mediante `TipoError` y agregando
+un mensaje descriptivo:
+
+```csharp
+throw new AplicacionException(
+    TipoError.NoEncontrado,
+    "El usuario no existe.");
+```
+
+La excepción se propaga hasta `GlobalExceptionHandler`, que utiliza su tipo
+para generar una respuesta con formato `ProblemDetails`. El mapeo actual es:
+
+- `NoEncontrado`: HTTP 404.
+- `Conflicto`: HTTP 409.
+- `Validacion` y `ReglaDeNegocio`: HTTP 400.
+- `ArgumentException`: HTTP 400.
+- Cualquier excepción no contemplada: HTTP 500 con un mensaje genérico; el
+  detalle técnico se registra en los logs y no se expone al cliente.
+
+Para activar el handler personalizado debe registrarse junto con
+`ProblemDetails` antes de construir la aplicación:
+
+```csharp
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+```
+
+También debe agregarse al pipeline HTTP después de `builder.Build()`:
+
+```csharp
+app.UseExceptionHandler();
+```
+
+La división de responsabilidades queda de la siguiente manera: el service o la
+entidad detecta y lanza el error, el controller permite que se propague y el
+handler global lo captura y lo traduce a una respuesta HTTP.
+
 
 ## Pendiente / próximos pasos
 

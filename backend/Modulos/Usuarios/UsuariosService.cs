@@ -1,3 +1,4 @@
+using CampusParticular.Excepciones;
 using CampusParticular.Modulos.Usuarios;
 using CampusParticular.Modulos.Usuarios.Entidades;
 using CampusParticular.Modulos.Usuarios.Persistencia;
@@ -16,11 +17,18 @@ public UsuariosService(IUsuarioRepositorio repositorio, IPasswordHasher password
   _passwordHasher = passwordHasher;
 
 }
+string noExiste = "El usuario no existe"; 
 public Task<Usuario?> BuscarPorIdAsync(Guid id, CancellationToken ct)
   {
     return _repositorio.BuscarUsuarioPorIdAsync(id,ct);
   }
 
+private async Task<Usuario> GetUsuarioAsync(Guid id, CancellationToken ct)
+  {
+    Usuario? usuario = await _repositorio.BuscarUsuarioPorIdAsync(id,ct); 
+    return usuario ?? throw new AplicacionException
+      ( TipoError.NoEncontrado,$"El usuario con ID '{id}' no existe ");
+  } 
 public Task<Usuario?> BuscarPorCorreoAsync (string correoElectronico, CancellationToken ct)
   {
     return _repositorio.BuscarUsuarioPorCorreoAsync(correoElectronico,ct); 
@@ -38,7 +46,8 @@ public async Task<Usuario> CrearUsuarioAsync(string correoElectronico,string pas
      
     if (usuarioExistente is not null)
       {
-        throw new InvalidOperationException (" Ya se encuentra registrado un usuario con ese correo "); 
+        throw new AplicacionException
+          (TipoError.Conflicto," Ya se encuentra registrado un usuario con ese correo "); 
       }
     
     string hashPassword = _passwordHasher.Hashear(password);
@@ -53,17 +62,20 @@ public async Task<Usuario> CrearUsuarioAsync(string correoElectronico,string pas
     return _repositorio.ListarUsuariosAsync(incluirDesactivados,ct);  
   }
 
-  public async Task CambiarPasswordAsync(Guid Id, string PasswordActual, string PasswordNueva, CancellationToken ct)
+  public async Task CambiarPasswordAsync(Guid Id, string PasswordActual, 
+      string PasswordNueva, CancellationToken ct)
   {
     Usuario? usuario = await _repositorio.BuscarUsuarioPorIdAsync(Id,ct); 
     if (usuario is null)
     {
-      throw new InvalidOperationException ("El Usuario No existe."); 
+      throw new AplicacionException
+        (TipoError.NoEncontrado,noExiste);  
     }
 
     if (!_passwordHasher.Verificar(PasswordActual, usuario.HashPassword))
     {
-      throw new InvalidOperationException("La contraseña actual es incorrecta.");
+      throw new AplicacionException
+        (TipoError.Validacion,"La contraseña actual es incorrecta.");
     }
 
     ValidarPassword(PasswordNueva);
@@ -76,15 +88,16 @@ private static void ValidarPassword(string password)
 {
   if (string.IsNullOrWhiteSpace(password))
   {
-    throw new ArgumentException("La contraseña es obligatoria.", nameof(password));
+    throw new AplicacionException
+      (TipoError.Validacion, "La contraseña es obligatoria ");  
   }
 
   if (password.Length < 6)
   {
-    throw new ArgumentException(
-      "La contraseña debe tener al menos 6 caracteres.",
-      nameof(password));
+    throw new AplicacionException(TipoError.ReglaDeNegocio,
+      "La contraseña debe tener al menos 6 caracteres.");
   }
+
 }
 
 public async Task<Usuario> ActualizarPerfilAsync(Guid id, string nombre, string apellido, CancellationToken ct)
@@ -93,7 +106,8 @@ public async Task<Usuario> ActualizarPerfilAsync(Guid id, string nombre, string 
 
     if (usuario is null)
     {
-      throw new InvalidOperationException("El usuario no existe.");
+      throw new AplicacionException
+        (TipoError.NoEncontrado,noExiste); 
     }
 
     usuario.ActualizarPerfil(nombre, apellido);

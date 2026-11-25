@@ -1,3 +1,5 @@
+using CampusParticular.Excepciones;
+
 namespace CampusParticular.Modulos.Usuarios.Entidades;
 
 public class Usuario
@@ -26,14 +28,15 @@ public class Usuario
     FechaActualizado = FechaCreado;
   } 
 
-  public Boolean soyAdministrador()
-   => this.Rol.Equals(RolUsuario.Admin); 
+  public bool EsAdministrador()  
+  => Rol.Equals(RolUsuario.Admin); 
 
   public void ActualizarPassword(string nuevoHashPassword)
   {
     if (!Activo)
     {
-      throw new InvalidOperationException("No se puede modificar un usuario desactivado.");
+      throw new AplicacionException
+      (TipoError.Validacion,"No se puede modificar un usuario desactivado.");
     }
 
     ArgumentException.ThrowIfNullOrWhiteSpace(nuevoHashPassword);
@@ -41,31 +44,64 @@ public class Usuario
     FechaActualizado = DateTimeOffset.UtcNow;
   }
 
-public void ActualizarPerfil(string nombre, string apellido)
+private static string ValidarCampo(string valor, string nombreCampo)
 {
-  if (!Activo)
-  {
-    throw new InvalidOperationException(
-      "No se puede modificar un usuario desactivado.");
-  }
-  if (string.IsNullOrWhiteSpace(nombre))
-  {
-        throw new ArgumentException(
-            "El nombre es obligatorio.",
-            nameof(nombre));
-  }
-
-    if (string.IsNullOrWhiteSpace(apellido))
+  if (string.IsNullOrWhiteSpace(valor))
     {
-        throw new ArgumentException(
-            "El apellido es obligatorio.",
-            nameof(apellido));
+      throw new AplicacionException
+        (TipoError.Validacion, "El Nombre es obligatorio"); 
     }
-
-    Nombre = nombre.Trim();
-    Apellido = apellido.Trim();
-    FechaActualizado = DateTimeOffset.UtcNow;
+  return valor.Trim();
 }
+
+private bool verificarActivo()
+  {
+    if (!Activo)
+    {
+      throw new AplicacionException
+        (TipoError.Validacion,"No se puede modificar un usuario desactivado");
+    }
+    return true; 
+  }
+
+public void ActualizarPerfil(string nombre, string apellido)
+{ 
+  if (verificarActivo())
+    {
+      Nombre = ValidarCampo(nombre,"Nombre"); 
+      Apellido = ValidarCampo(apellido,"Apellido");
+      FechaActualizado = DateTimeOffset.UtcNow;  
+    }
+}
+
+public void CambiarRol(RolUsuario nuevoRol)
+  {
+    if (verificarActivo())
+    {
+      Rol=nuevoRol;
+      FechaActualizado=DateTimeOffset.UtcNow; 
+    }
+  } 
+
+public void Desactivar()
+  {
+    if(verificarActivo())
+    {
+        Activo=false; 
+        FechaActualizado=DateTimeOffset.UtcNow; 
+        FechaDesactivado=DateTimeOffset.UtcNow;
+    }
+  }
+
+  public void Reactivar()
+  {
+    if (Activo == false)
+    {
+      Activo = true;
+      FechaDesactivado=null; 
+      FechaActualizado=DateTimeOffset.UtcNow; 
+    } 
+  }
 
 
 }

@@ -12,10 +12,12 @@ var rutaBase = Path.Combine(builder.Environment.ContentRootPath, "campus.db");
 builder.Services.AddScoped<IUsuarioRepositorio,UsuarioRepositorio>(); 
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<UsuariosService>(); 
+builder.Services.AddProblemDetails();
+
 
 var app = builder.Build();
 await using var scope = app.Services.CreateAsyncScope();
 var dbContext= scope.ServiceProvider.GetRequiredService<CampusDbContext>();
 await dbContext.Database.EnsureCreatedAsync();
-
+app.UseExceptionHandler(); 
 app.Run();
