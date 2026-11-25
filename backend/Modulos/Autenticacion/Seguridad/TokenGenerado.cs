@@ -2,7 +2,6 @@ using System;
 
 namespace CampusParticular.Modulos.Autenticacion.Seguridad;
 
-public class TokenGenerado
-{
-
-}
+public sealed record TokenGenerado(
+    string AccessToken,
+    DateTimeOffset ExpiraEn);

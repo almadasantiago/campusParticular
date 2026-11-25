@@ -54,12 +54,12 @@ private static string ValidarCampo(string valor, string nombreCampo)
   return valor.Trim();
 }
 
-private bool verificarActivo()
+public bool verificarActivo()
   {
     if (!Activo)
     {
       throw new AplicacionException
-        (TipoError.Validacion,"No se puede modificar un usuario desactivado");
+        (TipoError.Validacion,"El usuario está desactivado");
     }
     return true; 
   }

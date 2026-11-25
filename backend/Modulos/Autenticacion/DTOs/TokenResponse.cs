@@ -1,8 +1,7 @@
 using System;
-
 namespace CampusParticular.Modulos.Autenticacion.DTOs;
 
-public class TokenResponse
-{
+public sealed record TokenResponse(
+    string AccessToken,
+    DateTimeOffset ExpiraEn);
 
-}

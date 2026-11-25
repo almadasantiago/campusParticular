@@ -2,7 +2,6 @@ using System;
 
 namespace CampusParticular.Modulos.Autenticacion.DTOs;
 
-public class LoginRequest
-{
-
-}
+public sealed record LoginRequest(
+    string CorreoElectrónico,
+    string Password);
