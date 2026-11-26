@@ -11,7 +11,8 @@ namespace CampusParticular.Modulos.Autenticacion;
 public sealed class AuthService(
     IUsuarioRepositorio usuarios, 
     IPasswordHasher passwordHasher, 
-    IJwtTokenGenerator jwtTokenGenerator)
+    IJwtTokenGenerator jwtTokenGenerator,
+    IRefreshTokenGenerator refreshTokenGenerator)
 {
     public async Task<TokenResponse> LoginAsync(LoginRequest request, CancellationToken ct)
     {
@@ -22,16 +23,9 @@ public sealed class AuthService(
         bool credencialesValidas = ((usuario is not null) &&
             (passwordHasher.Verificar(request.Password,usuario.HashPassword))); 
         
-        if (!credencialesValidas)
+        if ((!credencialesValidas) || (!usuario.Activo))
         {
-            throw new AplicacionException
-            (TipoError.Validacion,"Correo electronico o contraseña incorrectas");
-        }
-         if (!usuario!.Activo)
-        {
-            throw new AplicacionException(
-                TipoError.Validacion,
-                "El usuario está desactivado.");
+            throw AplicacionException.CredencialesInvalidas();
         }
         
         TokenGenerado token = jwtTokenGenerator.Generar(usuario); 

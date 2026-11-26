@@ -1,4 +1,6 @@
 using CampusParticular.Excepciones;
+using CampusParticular.Infraestructura.Autenticacion;
+using CampusParticular.Modulos.Autenticacion;
 using CampusParticular.Modulos.Usuarios;
 using CampusParticular.Modulos.Usuarios.Entidades;
 using CampusParticular.Modulos.Usuarios.Persistencia;
@@ -11,11 +13,12 @@ public sealed class UsuariosService
 {
 private readonly IUsuarioRepositorio _repositorio;
 private readonly IPasswordHasher _passwordHasher;
-public UsuariosService(IUsuarioRepositorio repositorio, IPasswordHasher passwordHasher)
+private readonly IUserActual _userActual; 
+public UsuariosService(IUsuarioRepositorio repositorio, IPasswordHasher passwordHasher, IUserActual usuarioActual)
 {
   _repositorio = repositorio; 
   _passwordHasher = passwordHasher;
-
+  _userActual = usuarioActual; 
 }
 string noExiste = "El usuario no existe"; 
 public Task<Usuario?> BuscarPorIdAsync(Guid id, CancellationToken ct)
@@ -29,6 +32,7 @@ private async Task<Usuario> GetUsuarioAsync(Guid id, CancellationToken ct)
     return usuario ?? throw new AplicacionException
       ( TipoError.NoEncontrado,$"El usuario con ID '{id}' no existe ");
   } 
+
 public Task<Usuario?> BuscarPorCorreoAsync (string correoElectronico, CancellationToken ct)
   {
     return _repositorio.BuscarUsuarioPorCorreoAsync(correoElectronico,ct); 
@@ -38,7 +42,8 @@ public Task<Usuario?> BuscarPorNombreOApellidoAsync (string Nombre,string Apelli
   {
     return _repositorio.BuscarUsuarioPorNombreOApellidoAsync(Nombre,Apellido,ct); 
   }
-public async Task<Usuario> CrearUsuarioAsync(string correoElectronico,string password,string nombre, string apellido, RolUsuario rol, CancellationToken ct)
+
+public async Task<Usuario> CrearUsuarioAsync(string correoElectronico,string password,string nombre, string apellido, CancellationToken ct)
   {
     ValidarPassword(password);
     string correo=correoElectronico.Trim().ToLowerInvariant(); 
@@ -51,7 +56,7 @@ public async Task<Usuario> CrearUsuarioAsync(string correoElectronico,string pas
       }
     
     string hashPassword = _passwordHasher.Hashear(password);
-    Usuario userNuevo = new Usuario(correo,hashPassword,nombre.Trim(),apellido.Trim(),rol); 
+    Usuario userNuevo = new Usuario(correo,hashPassword,nombre.Trim(),apellido.Trim(),RolUsuario.Estudiante); 
     _repositorio.AgregarUsuario(userNuevo); 
     await _repositorio.GuardarCambiosAsync(ct);
     return userNuevo; 
@@ -116,9 +121,19 @@ public async Task<Usuario> ActualizarPerfilAsync(Guid id, string nombre, string 
     return usuario;
 }
 
+public async Task CambiarRolAsync(Guid usuarioId, RolUsuario nuevoRol, CancellationToken ct)
+  {
+    if (_userActual.Id == usuarioId)
+    {
+      throw new AplicacionException
+        (TipoError.ReglaDeNegocio," El usuario actual no puede cambiar su propio rol ");
+    }
 
+    Usuario usuario= await GetUsuarioAsync(usuarioId, ct);
+    usuario.CambiarRol(nuevoRol); 
+    await _repositorio.GuardarCambiosAsync(ct);  
 
-
+  }
 
 
 

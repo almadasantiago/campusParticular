@@ -38,6 +38,13 @@ public sealed class GlobalExceptionHandler(
                         error.Message
                     ),
 
+                TipoError.NoAutorizado =>
+                    (
+                        StatusCodes.Status401Unauthorized,
+                        "No autorizado",
+                        error.Message
+                    ),
+
                 _ =>
                     (
                         StatusCodes.Status500InternalServerError,

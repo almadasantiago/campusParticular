@@ -11,4 +11,11 @@ public sealed class AplicacionException : Exception
     {
         Tipo = tipo;
     }
+
+    public static AplicacionException CredencialesInvalidas()
+    {
+        return new AplicacionException(
+            TipoError.NoAutorizado,
+            "Las credenciales ingresadas no son válidas.");
+    }
 }
